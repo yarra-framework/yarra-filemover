@@ -3,9 +3,14 @@
 
 #include <QtCore>
 
+#include <boost/filesystem.hpp>
+#include <boost/exception/all.hpp>
+
 #include <yfm_log.h>
 #include <yfm_configuration.h>
 #include <yfm_notification.h>
+
+namespace fs = boost::filesystem;
 
 
 class yfmProcess : public QObject
@@ -17,9 +22,9 @@ public:
 
     int returnValue;
 
-    yfmConfiguration configuration;
     yfmLog           log;
     yfmNotification  notification;
+    yfmConfiguration configuration;
 
     void terminate();
 
@@ -30,7 +35,9 @@ signals:
 
 public slots:
     void run();
-
+    bool checkFolders();
+    bool moveFiles();
+    bool removeEmptyFolders();
 
 };
 

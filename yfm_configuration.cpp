@@ -1,18 +1,23 @@
-#include "yfm_configuration.h"
-
 #include <QtCore>
 
+#include "yfm_configuration.h"
+#include "yfm_log.h"
 
-yfmConfiguration::yfmConfiguration()
+
+
+yfmConfiguration::yfmConfiguration(yfmLog* logInstance)
 {
+    log=logInstance;
+
     serverName="";
     notificationMail.clear();
-    notificationEnabled=true;
+    notificationEnabled=false;
 
     locationSource="";
     locationTarget="";
 
     useYearSubfolder=true;
+    waitHours=12;
 }
 
 
@@ -20,10 +25,31 @@ bool yfmConfiguration::load()
 {
     {
         QSettings configFile("filemover.ini", QSettings::IniFormat);
+        serverName          =configFile.value("Settings/ServerName"         ,"").toString();
+        locationSource      =configFile.value("Settings/LocationSource"     ,"").toString();
+        locationTarget      =configFile.value("Settings/LocationTarget"     ,"").toString();
+        QStringList tempList=configFile.value("Settings/NotificationMail"   ,"").toStringList();
+        notificationMail    =tempList.join(",");
+        notificationEnabled =configFile.value("Settings/NotificationEnabled",false).toBool();
+        useYearSubfolder    =configFile.value("Settings/UseYearSubfolder"   ,true ).toBool();
+        waitHours           =configFile.value("Settings/WaitHours"          ,12   ).toInt();
     }
 
     if (serverName.isEmpty())
     {
+        log->error("No server name given");
+        return false;
+    }
+
+    if (locationSource.isEmpty())
+    {
+        log->error("Source location cannot be empty");
+        return false;
+    }
+
+    if (locationTarget.isEmpty())
+    {
+        log->error("Source location cannot be empty");
         return false;
     }
 

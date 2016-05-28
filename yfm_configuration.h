@@ -4,21 +4,28 @@
 #include <QtCore>
 
 
+class yfmLog;
+
 class yfmConfiguration
 {
 public:
-    yfmConfiguration();
+    yfmConfiguration(yfmLog* logInstance);
 
     QString     serverName;
-    QStringList notificationMail;
+    int         waitHours;
+    bool        useYearSubfolder;
+
+    QString     notificationMail;
     bool        notificationEnabled;
 
     QString     locationSource;
     QString     locationTarget;
 
-    bool        useYearSubfolder;
 
     bool load();
+
+protected:
+    yfmLog* log;
 
 };
 

@@ -14,14 +14,16 @@ public:
 
     void sendErrorNotification(yfmConfiguration* configuration);
 
-    yfmLog* log;
-
     QString mailFrom;
     QString mailTo;
     QString mailSubject;
     QString mailBody;
 
     void sendMail();
+
+protected:
+    yfmLog* log;
+
 };
 
 

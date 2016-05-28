@@ -13,7 +13,7 @@ void yfmNotification::sendErrorNotification(yfmConfiguration* configuration)
 {
     if (configuration->notificationEnabled)
     {
-        log->info("<Sending error notification>\n");
+        log->info("<Sending error notification>");
 
         // TODO: Compose email
 
