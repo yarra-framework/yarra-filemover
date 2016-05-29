@@ -27,6 +27,14 @@ public:
     yfmConfiguration configuration;
 
     void terminate();
+    bool checkFolders();
+    bool moveFiles();
+    bool removeEmptyFolders();
+    void prepare();
+
+    std::string getTargetPath(fs::path filename);
+
+    QString yearPrefix;
 
 
 signals:
@@ -35,9 +43,6 @@ signals:
 
 public slots:
     void run();
-    bool checkFolders();
-    bool moveFiles();
-    bool removeEmptyFolders();
 
 };
 

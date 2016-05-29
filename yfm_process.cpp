@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <chrono>
+#include <ctime>
 
 #include <QCoreApplication>
 #include <QtCore>
@@ -29,6 +30,8 @@ void yfmProcess::run()
         terminate();
         return;
     }
+
+    prepare();
 
     if (!checkFolders())
     {
@@ -65,6 +68,12 @@ void yfmProcess::terminate()
 }
 
 
+void yfmProcess::prepare()
+{
+    yearPrefix=QDateTime::currentDateTime().toString("yyyy");
+}
+
+
 bool yfmProcess::checkFolders()
 {
     fs::path source(configuration.locationSource.toStdString());
@@ -90,20 +99,27 @@ bool yfmProcess::checkFolders()
 
 bool yfmProcess::moveFiles()
 {
-    /*
-    fs::path folderPath(folder);
+    fs::path sourcePath(configuration.locationSource.toStdString());
 
-    if (fs::is_directory(folderPath))
+    if (fs::is_directory(sourcePath))
     {
         try
         {
             // Recursively iterate through folder
-            fs::recursive_directory_iterator dir_entry(folderPath);
-            fs::recursive_directory_iterator iter_end;
+            fs::directory_iterator dir_entry(sourcePath);
+            fs::directory_iterator iter_end;
 
             while (dir_entry != iter_end)
             {
+                if (fs::is_directory(dir_entry->path()))
+                {
+                    log.info("Processing " + QString::fromStdString(dir_entry->path().stem().string()) );
+                }
+
+                /*
+                //last_write_time
                 if (dir_entry->path().extension()==".dat")
+                //if (dir_entry->path().extension()==".dat")
                 {
                     try
                     {
@@ -116,9 +132,11 @@ bool yfmProcess::moveFiles()
                     }
                     catch (const std::runtime_error &e)
                     {
-                        LOG("ERROR: Unable to read file " << dir_entry->path() << " (" << e.what() << ")");
+                        std::string errorMsg="Unable to access file " + dir_entry->path().string() + " (" + e.what() + ")";
+                        log.error(QString::fromStdString(errorMsg));
                     }
                 }
+                */
 
                 ++dir_entry;
             }
@@ -126,15 +144,15 @@ bool yfmProcess::moveFiles()
         }
         catch (const fs::filesystem_error & e)
         {
-            LOG("ERROR: Unable to access directory " << folderPath << " (" << boost::diagnostic_information(e) << ")");
+            std::string errorMsg="Unable to access directory " + sourcePath.string() + " (" + boost::diagnostic_information(e) + ")";
+            log.error(QString::fromStdString(errorMsg));
         }
     }
     else
     {
-
+        log.error("Can't access path " + configuration.locationSource);
+        return false;
     }
-
-    */
 
     return true;
 }
