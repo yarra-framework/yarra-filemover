@@ -4,6 +4,7 @@
 #include <vector>
 #include <chrono>
 #include <ctime>
+#include <string>
 
 #include <QCoreApplication>
 #include <QtCore>
@@ -17,6 +18,7 @@ yfmProcess::yfmProcess(QObject *parent) :
   , configuration(&log)
 {
     returnValue=0;
+    casesProcessed=0;
 }
 
 
@@ -40,15 +42,12 @@ void yfmProcess::run()
         return;
     }
 
-    if (!moveFiles())
+    if (!moveCases())
     {
         log.error("Problems during transfer of files");
     }
 
-    if (!removeEmptyFolders())
-    {
-        log.error("Problems during removal of empty folders");
-    }
+    log.info(QString::number(casesProcessed)+" cases moved");
 
     terminate();
 }
@@ -70,7 +69,8 @@ void yfmProcess::terminate()
 
 void yfmProcess::prepare()
 {
-    yearPrefix=QDateTime::currentDateTime().toString("yyyy");
+    yearPrefix=QDateTime::currentDateTime().toString("yyyy").toStdString();
+    time(&currentTime);
 }
 
 
@@ -97,14 +97,17 @@ bool yfmProcess::checkFolders()
 }
 
 
-bool yfmProcess::moveFiles()
+bool yfmProcess::moveCases()
 {
+    casesProcessed=0;
     fs::path sourcePath(configuration.locationSource.toStdString());
 
     if (fs::is_directory(sourcePath))
     {
         try
         {
+            log.info("");
+
             // Recursively iterate through folder
             fs::directory_iterator dir_entry(sourcePath);
             fs::directory_iterator iter_end;
@@ -113,39 +116,75 @@ bool yfmProcess::moveFiles()
             {
                 if (fs::is_directory(dir_entry->path()))
                 {
-                    log.info("Processing " + QString::fromStdString(dir_entry->path().stem().string()) );
-                }
+                    time_t folderWriteTime=fs::last_write_time(dir_entry->path());
+                    int hoursSinceWrite=int(difftime(currentTime,folderWriteTime)/3600.);
 
-                /*
-                //last_write_time
-                if (dir_entry->path().extension()==".dat")
-                //if (dir_entry->path().extension()==".dat")
-                {
-                    try
+                    if (hoursSinceWrite>=configuration.waitHours)
                     {
-                        totalFilesFound++;
+                        fs::path currentFolder=dir_entry->path().stem();
+                        fs::path folderPrefix=fs::path(getTargetPrefix(currentFolder));
+                        fs::path targetPath=fs::path(configuration.locationTarget.toStdString()) / folderPrefix / currentFolder;
 
-                        std::string aliasedPath=getAliasedPath(dir_entry->path().parent_path().string(), folder, alias);
-                        std::string filename=dir_entry->path().filename().string();
+                        log.info("Processing case \"" + QString::fromStdString(currentFolder.string()) + "\"...");
+                        log.info("Target folder: " + QString::fromStdString(targetPath.string()) );
 
-                        DEBUG("Processing " << dir_entry->path().string());
-                    }
-                    catch (const std::runtime_error &e)
-                    {
-                        std::string errorMsg="Unable to access file " + dir_entry->path().string() + " (" + e.what() + ")";
-                        log.error(QString::fromStdString(errorMsg));
+                        if (fs::exists(targetPath))
+                        {
+                            log.error("Target folder already exists "+QString::fromStdString(targetPath.string()));
+                            log.error("Skipping case.");
+                            ++dir_entry;
+                            continue;
+                        }
+
+                        try
+                        {
+                            fs::create_directories(targetPath);
+                        }
+                        catch (const fs::filesystem_error & e)
+                        {
+                            std::string errorMsg="Unable to create folder " + targetPath.string() + " (" + boost::diagnostic_information(e) + ")";
+                            log.error(QString::fromStdString(errorMsg));
+                            return false;
+                        }
+
+                        if (!fs::exists(targetPath))
+                        {
+                            std::string errorMsg="Folder was not created " + targetPath.string();
+                            log.error(QString::fromStdString(errorMsg));
+                            return false;
+                        }
+
+                        if (!copyFiles(dir_entry->path(), targetPath))
+                        {
+                            log.error("Copying files failed.");
+                            return false;
+                        }
+
+                        try
+                        {
+                            log.info("Removing case on source location");
+                            fs::remove_all(dir_entry->path());
+                        }
+                        catch (const fs::filesystem_error & e)
+                        {
+                            std::string errorMsg="Unable to remove folder " + dir_entry->path().string() + " (" + boost::diagnostic_information(e) + ")";
+                            log.error(QString::fromStdString(errorMsg));
+                            return false;
+                        }
+
+                        log.info("");
+                        casesProcessed++;
                     }
                 }
-                */
 
                 ++dir_entry;
             }
-
         }
         catch (const fs::filesystem_error & e)
         {
             std::string errorMsg="Unable to access directory " + sourcePath.string() + " (" + boost::diagnostic_information(e) + ")";
             log.error(QString::fromStdString(errorMsg));
+            return false;
         }
     }
     else
@@ -158,9 +197,65 @@ bool yfmProcess::moveFiles()
 }
 
 
-bool yfmProcess::removeEmptyFolders()
+std::string yfmProcess::getTargetPrefix(fs::path filename)
 {
-    return true;
+    if (configuration.prefixMode==yfmConfiguration::prefix_year)
+    {
+        return yearPrefix;
+    }
+    else
+    {
+        return "";
+    }
 }
 
+
+bool yfmProcess::copyFiles(fs::path sourceFolder, fs::path targetFolder)
+{
+    try
+    {
+
+        fs::directory_iterator entry(sourceFolder);
+        fs::directory_iterator iter_end;
+
+        while (entry != iter_end)
+        {
+            uintmax_t sourceSize=fs::file_size(entry->path());
+
+            fs::path destName=targetFolder / entry->path().filename();
+
+            try
+            {
+                fs::copy_file(entry->path(), destName, fs::copy_option::fail_if_exists);
+            }
+            catch (const fs::filesystem_error & e)
+            {
+                std::string errorMsg="Unable to copy file " + entry->path().string() + " to " + destName.string() + " (" + boost::diagnostic_information(e) + ")";
+                log.error(QString::fromStdString(errorMsg));
+                return false;
+            }
+
+            uintmax_t destSize=fs::file_size(destName);
+
+            if (sourceSize!=destSize)
+            {
+                log.error("File sizes to not match: " + QString::number(sourceSize) + " vs " + QString::number(destSize));
+                return false;
+            }
+
+            // Output filename and sizes for later debugging
+            log.info("File copied " + QString::fromStdString(entry->path().filename().string()) + " (" + QString::number(sourceSize)+" -> "+QString::number(destSize)+")" );
+
+            ++entry;
+        }
+    }
+    catch (const fs::filesystem_error & e)
+    {
+        std::string errorMsg="Unable to iterate folder " + sourceFolder.string() + " (" + boost::diagnostic_information(e) + ")";
+        log.error(QString::fromStdString(errorMsg));
+        return false;
+    }
+
+    return true;
+}
 

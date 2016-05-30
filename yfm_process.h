@@ -3,7 +3,10 @@
 
 #include <QtCore>
 
+#define BOOST_NO_CXX11_SCOPED_ENUMS
 #include <boost/filesystem.hpp>
+#undef BOOST_NO_CXX11_SCOPED_ENUMS
+
 #include <boost/exception/all.hpp>
 
 #include <yfm_log.h>
@@ -28,14 +31,16 @@ public:
 
     void terminate();
     bool checkFolders();
-    bool moveFiles();
-    bool removeEmptyFolders();
+    bool moveCases();
     void prepare();
+    bool copyFiles(fs::path sourceFolder, fs::path targetFolder);
 
-    std::string getTargetPath(fs::path filename);
+    std::string getTargetPrefix(fs::path filename);
 
-    QString yearPrefix;
+    std::string yearPrefix;
+    time_t currentTime;
 
+    int casesProcessed;
 
 signals:
     void finished();

@@ -21,6 +21,7 @@ QMAKE_CXXFLAGS += -DNDEBUG -std=c++11 -DWT_DEPRECATED_3_0_0
 
 # Statically link dependencies
 LIBS += $$BOOST_PATH/libboost_filesystem.a
+LIBS += $$BOOST_PATH/libboost_thread.a
 LIBS += $$BOOST_PATH/libboost_date_time.a
 LIBS += $$BOOST_PATH/libboost_system.a
 

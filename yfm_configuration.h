@@ -9,11 +9,18 @@ class yfmLog;
 class yfmConfiguration
 {
 public:
+
+    enum prefixmodes
+    {
+        prefix_none=0,
+        prefix_year=1
+    };
+
     yfmConfiguration(yfmLog* logInstance);
 
     QString     serverName;
     int         waitHours;
-    bool        useYearSubfolder;
+    prefixmodes prefixMode;
 
     QString     notificationMail;
     bool        notificationEnabled;

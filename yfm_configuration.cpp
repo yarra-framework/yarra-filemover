@@ -16,7 +16,7 @@ yfmConfiguration::yfmConfiguration(yfmLog* logInstance)
     locationSource="";
     locationTarget="";
 
-    useYearSubfolder=true;
+    prefixMode=prefix_none;
     waitHours=12;
 }
 
@@ -31,8 +31,20 @@ bool yfmConfiguration::load()
         QStringList tempList=configFile.value("Settings/NotificationMail"   ,"").toStringList();
         notificationMail    =tempList.join(",");
         notificationEnabled =configFile.value("Settings/NotificationEnabled",false).toBool();
-        useYearSubfolder    =configFile.value("Settings/UseYearSubfolder"   ,true ).toBool();
         waitHours           =configFile.value("Settings/WaitHours"          ,12   ).toInt();
+
+        QString prefixModeString=configFile.value("Settings/PrefixMode","").toString();
+        prefixModeString=prefixModeString.toUpper();
+
+        if (prefixModeString=="YEAR")
+        {
+            prefixMode=prefix_year;
+        }
+        else
+        {
+            prefixMode=prefix_none;
+        }
+
     }
 
     if (serverName.isEmpty())
