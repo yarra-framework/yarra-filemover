@@ -7,6 +7,8 @@
 #include "yfm_log.h"
 
 
+#define YFM_VERSION "YFM 0.10"
+
 yfmLog::yfmLog()
 {
 }
@@ -14,7 +16,7 @@ yfmLog::yfmLog()
 
 void yfmLog::initialize()
 {
-    info("\n################################################################################", false);
+    info("\n################################################################## "+QString(YFM_VERSION)+" ##", false);
     info("Process started");
 }
 
@@ -22,7 +24,7 @@ void yfmLog::initialize()
 void yfmLog::finalize()
 {
     info("Process terminated");
-    info("################################################################################", false);
+    info("##############################################################################", false);
 }
 
 

@@ -91,7 +91,7 @@ bool yfmProcess::checkFolders()
         return false;
     }
 
-    // TODO: Check if we can write files into target folder
+    // TODO: Check upfront if we can write files into target folder
 
     return true;
 }
@@ -128,12 +128,21 @@ bool yfmProcess::moveCases()
                         log.info("Processing case \"" + QString::fromStdString(currentFolder.string()) + "\"...");
                         log.info("Target folder: " + QString::fromStdString(targetPath.string()) );
 
-                        if (fs::exists(targetPath))
+                        try
                         {
-                            log.error("Target folder already exists "+QString::fromStdString(targetPath.string()));
-                            log.error("Skipping case.");
-                            ++dir_entry;
-                            continue;
+                            if (fs::exists(targetPath))
+                            {
+                                log.error("Target folder already exists "+QString::fromStdString(targetPath.string()));
+                                log.error("Skipping case.");
+                                ++dir_entry;
+                                continue;
+                            }
+                        }
+                        catch (const fs::filesystem_error & e)
+                        {
+                            std::string errorMsg="Unable to check for folder " + targetPath.string() + "  Cause: " + boost::diagnostic_information(e);
+                            log.error(QString::fromStdString(errorMsg));
+                            return false;
                         }
 
                         try
@@ -142,7 +151,7 @@ bool yfmProcess::moveCases()
                         }
                         catch (const fs::filesystem_error & e)
                         {
-                            std::string errorMsg="Unable to create folder " + targetPath.string() + " (" + boost::diagnostic_information(e) + ")";
+                            std::string errorMsg="Unable to create folder " + targetPath.string() + "  Cause: " + boost::diagnostic_information(e);
                             log.error(QString::fromStdString(errorMsg));
                             return false;
                         }
@@ -167,7 +176,7 @@ bool yfmProcess::moveCases()
                         }
                         catch (const fs::filesystem_error & e)
                         {
-                            std::string errorMsg="Unable to remove folder " + dir_entry->path().string() + " (" + boost::diagnostic_information(e) + ")";
+                            std::string errorMsg="Unable to remove folder " + dir_entry->path().string() + "  Cause: " + boost::diagnostic_information(e);
                             log.error(QString::fromStdString(errorMsg));
                             return false;
                         }
@@ -182,7 +191,7 @@ bool yfmProcess::moveCases()
         }
         catch (const fs::filesystem_error & e)
         {
-            std::string errorMsg="Unable to access directory " + sourcePath.string() + " (" + boost::diagnostic_information(e) + ")";
+            std::string errorMsg="Unable to access directory " + sourcePath.string() + "  Cause: " + boost::diagnostic_information(e);
             log.error(QString::fromStdString(errorMsg));
             return false;
         }
@@ -214,7 +223,6 @@ bool yfmProcess::copyFiles(fs::path sourceFolder, fs::path targetFolder)
 {
     try
     {
-
         fs::directory_iterator entry(sourceFolder);
         fs::directory_iterator iter_end;
 
@@ -230,7 +238,7 @@ bool yfmProcess::copyFiles(fs::path sourceFolder, fs::path targetFolder)
             }
             catch (const fs::filesystem_error & e)
             {
-                std::string errorMsg="Unable to copy file " + entry->path().string() + " to " + destName.string() + " (" + boost::diagnostic_information(e) + ")";
+                std::string errorMsg="Unable to copy file " + entry->path().string() + " to " + destName.string() + "  Cause: " + boost::diagnostic_information(e);
                 log.error(QString::fromStdString(errorMsg));
                 return false;
             }
@@ -251,7 +259,7 @@ bool yfmProcess::copyFiles(fs::path sourceFolder, fs::path targetFolder)
     }
     catch (const fs::filesystem_error & e)
     {
-        std::string errorMsg="Unable to iterate folder " + sourceFolder.string() + " (" + boost::diagnostic_information(e) + ")";
+        std::string errorMsg="Unable to iterate folder " + sourceFolder.string() + "  Cause: " + boost::diagnostic_information(e);
         log.error(QString::fromStdString(errorMsg));
         return false;
     }
