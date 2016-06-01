@@ -87,8 +87,27 @@ bool yfmProcess::checkFolders()
 
     if (!fs::exists(target))
     {
-        log.error("Target folder not acccessible");
-        return false;
+        // If target path does not exist, check if parent path exists. If not,
+        // there seems to be a mounting problem. Otherwise, try creating the
+        // target path.
+        if (!fs::exists(target.parent_path()))
+        {
+            log.error("Target folder not acccessible");
+            return false;
+        }
+        else
+        {
+            try
+            {
+                fs::create_directories(target);
+            }
+            catch (const fs::filesystem_error & e)
+            {
+                std::string errorMsg="Unable to create target folder " + target.string() + "  Cause: " + boost::diagnostic_information(e);
+                log.error(QString::fromStdString(errorMsg));
+                return false;
+            }
+        }
     }
 
     // TODO: Check upfront if we can write files into target folder

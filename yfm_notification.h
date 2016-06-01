@@ -14,7 +14,6 @@ public:
 
     void sendErrorNotification(yfmConfiguration* configuration);
 
-    QString mailFrom;
     QString mailTo;
     QString mailSubject;
     QString mailBody;

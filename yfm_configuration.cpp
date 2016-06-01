@@ -24,7 +24,7 @@ yfmConfiguration::yfmConfiguration(yfmLog* logInstance)
 bool yfmConfiguration::load()
 {
     {
-        QSettings configFile("filemover.ini", QSettings::IniFormat);
+        QSettings configFile(QCoreApplication::applicationDirPath()+"/filemover.ini", QSettings::IniFormat);
         serverName          =configFile.value("Settings/ServerName"         ,"").toString();
         locationSource      =configFile.value("Settings/LocationSource"     ,"").toString();
         locationTarget      =configFile.value("Settings/LocationTarget"     ,"").toString();

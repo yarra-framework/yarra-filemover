@@ -7,7 +7,7 @@
 #include "yfm_log.h"
 
 
-#define YFM_VERSION "YFM 0.10"
+#define YFM_VERSION "YFM 0.16"
 
 yfmLog::yfmLog()
 {

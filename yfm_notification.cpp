@@ -16,24 +16,25 @@ void yfmNotification::sendErrorNotification(yfmConfiguration* configuration)
         log->info("<Sending error notification>");
 
         mailSubject=configuration->serverName+": Problem while moving cases";
-        mailFrom="Yarra File Mover";
         mailTo=configuration->notificationMail;
         mailBody="<p>A problem occured while moving files from server <strong>"  + configuration->serverName
-                 + "</strong>. The lines below describe the error cause. More details can be found in the log on the server.</p>";
+                 + "</strong>.<br>&nbsp<br>\n The lines below describe the error cause. More details can be found in the log on the server.</p>\n";
 
-        mailBody+="<pre>";
+        mailBody+="<pre>\n";
         for (int i=0; i<log->errorLog.size(); i++)
         {
             mailBody+=log->errorLog.at(i)+"<br>";
         }
-        mailBody+="</pre>";
+        mailBody+="</pre>\n";
+
+        sendMail();
     }
 }
 
 
 void yfmNotification::sendMail()
 {
-    QString header=mailFrom;
+    QString header="From: Yarra FileMover <noreply@localhost>\n";
     header.append("To: " + mailTo + "\n");
     header.append("Subject: "+ mailSubject + "\n");
     header.append("MIME-Version: 1.0\n");
